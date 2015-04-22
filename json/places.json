@@ -1,6 +1,7 @@
 [
     {
-        "title": "Mcdonalds",
+        "title": "McDonald's",
+        "type": "restaurant",
         "stars": 4,
         "smallDescr": "McDonalds, lovely food all the time",
         "openingHours": "All night",

@@ -23,12 +23,24 @@ svg #glasses {
     opacity: 0.7;
 }
 
-
-#place-box {
-    fill: "white";
-    opacity: 0.4;
+.place {
+    opacity: 0.5;
 }
 
+#place-box {
+    fill: white;
+    opacity: 0.6;
+}
+
+#title-box {
+    fill: blue;
+    opacity: 0.5;
+}
+
+selected-outline {
+    fill: green;
+    opacity: 0.8;
+}
 
 .box-text {
     font-family: Arial;
