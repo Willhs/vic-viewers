@@ -2,8 +2,8 @@
     {
         "title": "Mcdonalds",
         "stars": 4,
-        "smallDesc": "McDonalds, lovely food all the time",
-        "openUntil": "All night",
+        "smallDescr": "McDonalds, lovely food all the time",
+        "openingHours": "All night",
         "webSite": "www.mcdonalds.com",
         "moreInfo": "Today's specials:\nMcShit burger\t$1.00\nMcArse Nuggets\t$2.20",
         "location":
