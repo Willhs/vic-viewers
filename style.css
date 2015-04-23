@@ -32,7 +32,6 @@ video {
 
 #place-box {
     fill: white;
-    opacity: 0.6;
 }
 
 #title-box {
@@ -42,7 +41,7 @@ video {
 
 #selected-outline {
     fill: green;
-    opacity: 0.8;
+    /*opacity: 0.8;*/
 }
 
 .box-text {

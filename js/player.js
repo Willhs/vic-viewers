@@ -14,5 +14,6 @@ var Player = function(videoPath){
         video.muted = true;
     }
     this.load(videoPath);
+    this.loop = true;
     this.play();
 }
