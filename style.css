@@ -1,3 +1,7 @@
+body {
+    margin: 0px;
+}
+
 video {
     position: fixed;
     right: 0; bottom: 0;
@@ -14,17 +18,16 @@ video {
     text-anchor: start;
 }
 
-svg #glasses {
+#glasses-svg {
     opacity: 0.7;
 }
 
-#glasses-rect {
+#glasses-box {
     fill: steelblue;
-    opacity: 0.7;
 }
 
 .place {
-    opacity: 0.5;
+    opacity: 0.6;
 }
 
 #place-box {
@@ -37,7 +40,7 @@ svg #glasses {
     opacity: 0.5;
 }
 
-selected-outline {
+#selected-outline {
     fill: green;
     opacity: 0.8;
 }

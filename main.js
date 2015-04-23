@@ -1,29 +1,42 @@
 var player = new Player("video/adventure-time-evicted.mp4");
 player.mute();
 
-var pageWidth = 1900,
-    pageHeight = 600;
+var pageWidth = $(document).width(),
+    pageHeight = $(document).height();
 
-var glasses = d3.select("body").append("svg")
-    .attr("id", "glasses")
-    .attr("x", 0)
-    .attr("y", 300)
-    .attr("width", pageWidth)
-    .attr("height", pageHeight);
+var glassesHeightRatio = 0.8,
+    glassesHeight = pageHeight * glassesHeightRatio
+    glassesWidth = pageWidth;
+
+console.log("page height", pageHeight)
+console.log("glasses height: ", glassesHeight);
+
+var svg = d3.select("#glasses-svg")
+    .attr("transform", "translate(" + 0 + ", " + (((1 - glassesHeightRatio) * pageHeight) / 2) + ")")
+    .attr("width", glassesWidth)
+    .attr("height", glassesHeight);
+
+svg.select("#glasses-clip").append("ellipse")
+    .attr("cx", glassesWidth / 2)
+    .attr("cy", glassesHeight/2)
+    .attr("rx", glassesWidth*1)
+    .attr("ry", glassesHeight/2);
+
+var glasses = svg.select("#glasses-group")
+    .attr("clip-path", "url(#glasses-clip)");
 
 // a rectangle to enclose the whole svg
-glasses.append("rect")
-    .attr("id", "glasses-rect")
+glasses.select("#glasses-box")
     .attr("x", 0)
     .attr("y", 0)
     .attr("width", pageWidth)
-    .attr("height", pageHeight);
+    .attr("height", glassesHeight);
 
 // vic viewer logo
 glasses.append("text")
     .attr("id", "logo")
     .text("victoria viewers")
-    .attr("x", 300)
+    .attr("x", 750)
     .attr("y", 20);
 
 var places = glasses.append("g")
@@ -121,18 +134,19 @@ function readPlaces(jsonPath){
 readPlaces("json/places.json");
 
 // makes the place selected which means
-// place is a d3 selection of a node
-function selectPlace(place){
-    var boxIncrease = 20;
-    var placeBoxWidth = place.width + boxIncrease,
-        placeBoxHeight = place.height + boxIncrease;
+// place is a selector string
+function selectPlace(placeSelector){
+    var boxIncrease = 20
+        plusRegion = 20;// the extra region at the bottom to hold a plus sign
 
-    //$(".selected-place").removeClass(".selected-place");
-    place.removeClass(".selected-place");
+    var place = $(place);
 
-    places.select(place)
-        .attr(".selected-place")
-            .append("rect")
+    var placeBoxWidth = place.attr(width) + boxIncrease,
+        placeBoxHeight = place.attr(height) + boxIncrease + plusRegion;
+
+    place.removeClass("selected-place");
+
+    places.select(placeSelector).append("rect")
         .attr("id", "select-outline")
         .attr("x", -(boxIncrease/2))
         .attr("y", -(boxIncrease/2))
@@ -141,13 +155,11 @@ function selectPlace(place){
         .attr("rx", 15)
         .attr("ry", 15);
 
-    placeBox.transition()
+    place.transition()
         .duration(500)
         .style("opacity", 0.9);
 }
 
 setTimeout(function(){
-    var p0 = $("#place-0");
-    console.log(p0);
-    selectPlace(p0);
-}, 1000);
+    selectPlace("#place-0");
+}, 500);
