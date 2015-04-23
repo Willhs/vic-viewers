@@ -1,4 +1,4 @@
-var player = new Player("video/upper-cuba.mp4");
+var player = new Player("res/video/upper-cuba.mp4");
     player.mute();
 
 var pageWidth = $(document).width(),
@@ -125,7 +125,7 @@ function readPlaces(jsonPath){
             .attr("x", innerLeft)
             .attr("y", titleBoxHeight + openHoursBoxHeight - paddingVert)
             .text(function(d){
-                return "Open until: " + d.openingHours;
+                return "Opening hours: " + d.openingHours;
             })
             // keep text within box
             .each(function(){
@@ -174,7 +174,7 @@ function selectPlace(placeSelector){
 
     // select outline
     selectGroup.append("rect")
-        .attr("id", "select-outline")
+        .attr("id", "select-box")
         .attr("x", - (boxIncrease/2))
         .attr("y", - (boxIncrease/2))
         .attr("width", selectBoxWidth)
@@ -183,17 +183,20 @@ function selectPlace(placeSelector){
         .attr("ry", 15)
 
     // little plus sign
-    var plusLineLength = 20;
-        plusLineWidth = 5,
+    var plusLineLength = 20,
+        plusLineWidth = 5;
 
-    selectGroup.append("rect")
+    var plus = selectGroup.append("g")
+        .attr("id", "plus");
+
+    plus.append("rect")
         .attr("x", boxWidth / 2 - (plusLineWidth/2) )
         .attr("y", boxHeight + 3)
         .attr("width", plusLineWidth)
         .attr("height", plusLineLength)
         .attr("fill", "white");
 
-    selectGroup.append("rect")
+    plus.append("rect")
         .attr("x", (boxWidth / 2) - (plusLineLength/2))
         .attr("y", boxHeight + 3 + (plusLineLength/2) - (plusLineWidth/2))
         .attr("width", plusLineLength)
@@ -231,7 +234,63 @@ function deselectPlace(){
         // remove the select graphics
         .each("end", function(){ selectGroup.remove(); });
 
-    jqueryNode.removeClass(".selected-place");
+    removeClass(selector, "selected-place");
+}
+
+function expandPlace(selector){
+    var placeNode = places.select(selector),
+        titleBox = places.select("#title-box"),
+        placeBox = placeNode.select("#place-box"),
+        selectBox = placeNode.select("#select-box"),
+        selectPlusSign = placeNode.select("#plus"),
+        openingHours = placeNode.select("#open-until");
+
+    var expandHeight = 150,
+        paddingVert = 6,
+        paddingHor = 6,
+        selectBoxPadding = 20,
+        titleBoxHeight = +titleBox.attr("height")
+        extraInfoFontSize = 12;
+        console.log("hello\nyo");
+
+    // animations
+    var dur = 800;
+
+    selectBox.transition()
+        .duration(dur)
+        .attr("height", expandHeight + selectBoxPadding);
+
+    selectPlusSign.transition()
+        .duration(dur)
+        .style("opacity", 0);
+
+    placeBox.transition()
+        .duration(dur)
+        .attr("height", expandHeight);
+
+    openingHours.transition()
+        .duration(dur)
+        .attr("y", expandHeight - paddingVert);
+
+    // add extra info text
+    var extraInfo = placeNode.append("text")
+        .text(function(d){
+            var extraInfo = "";
+            d.extraInfo.forEach(function(sentence, i){
+                extraInfo += sentence + "\n";
+            })
+            return extraInfo;
+        })
+        .attr("x", paddingHor)
+        .attr("y", titleBoxHeight + paddingVert + extraInfoFontSize)
+        .style("opacity", 0);
+
+    extraInfo.transition()
+        .duration(dur)
+        .style("opacity", 1);
+
+    // add class "expanded" (addClass doesn't work)
+    addClass(selector, "expanded-place");
 }
 
 function createInterface(){
@@ -304,7 +363,7 @@ function selectNextPlace(forward){
 }
 
 // checks if any places are in the center, if so, then select the place
-function autoSelect(){
+function isPlaceInCenter(){
     var detectionRadius = 400;
 
     $(".place").each(function(i){
@@ -316,9 +375,24 @@ function autoSelect(){
 
         if (Math.sqrt(Math.pow(x - centerX, 2), Math.pow(y - centerY, 2)) < detectionRadius){
             console.log("place in center!");
-            selectPlace("#" + this.attr("id"));
+            return true;
         }
     })
+    return false;
+}
+
+function addClass(selector, className){
+    $(selector).attr("class", $(selector).attr("class") + " " + className);
+}
+
+function removeClass(selector, className){
+    $(selector).attr("class", $(selector).attr("class").replace(className, ""));
 }
 
 createInterface();
+setTimeout(function(){
+    selectPlace("#place-0");
+    setTimeout(function(){
+        expandPlace("#place-0");
+    }, 1000);
+}, 500);

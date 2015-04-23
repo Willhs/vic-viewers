@@ -4,14 +4,18 @@
         "type": "restaurant",
         "stars": 4,
         "smallDescr": "McDonalds, lovely food all the time",
-        "openingHours": "All night",
+        "openingHours": "all",
         "webSite": "www.mcdonalds.com",
-        "moreInfo": "Today's specials:\nMcShit burger\t$1.00\nMcArse Nuggets\t$2.20",
+        "extraInfo": [
+            "Today's specials:",
+            "McShit burger    $1.00",
+            "McArse Nuggets    $2.20"
+            ],
         "location":
             {
                 "time": 0,
                 "x": 500,
-                "y": 500
+                "y": 200
             }
 
     }
