@@ -1,20 +1,17 @@
-var player = new Player("res/video/upper-cuba.mp4");
-    player.mute();
-
 var pageWidth = $(document).width(),
     pageHeight = $(document).height();
 
 var glassesHeightRatio = 0.9,
-    glassesHeight = pageHeight * glassesHeightRatio
+    glassesHeight = pageHeight * glassesHeightRatio,
     glassesWidth = pageWidth;
 
-//console.log("page height", pageHeight)
-//console.log("glasses height: ", glassesHeight);
+var placeBoxWidth = 200,
+    placeBoxHeight = 80;
 
 var svg = d3.select("#glasses-svg")
-    .attr("transform", "translate(" + 0 + ", " + (((1 - glassesHeightRatio) * pageHeight) / 2) + ")")
-    .attr("width", glassesWidth)
-    .attr("height", glassesHeight);
+    .attr("transform", "translate(" + 0 + ", " + 0 + ")" )
+    .attr("width", pageWidth)
+    .attr("height", pageHeight);
 
 svg.select("#glasses-clip").append("ellipse")
     .attr("cx", glassesWidth / 2)
@@ -43,15 +40,26 @@ var places = glasses.append("g")
     .attr("id", "places");
 
 var DEFAULT_PLACE_OPACITY = 0.4;
+// if an autoselect can happen (hasn't happened recently)
+var selectCoolDown = true;
+function loadEnvironment(jsonPath, videoPath){
+    readPlaces(jsonPath, function(){
+        startVideo(videoPath);
+        startMovingPlaces();
+    });
+}
 
-function readPlaces(jsonPath){
+loadEnvironment("json/cuba-places.json", "res/video/lq_cuba_3.ogg");
+/*startVideo("res/video/lq_cuba_3.ogg");*/
+
+function readPlaces(jsonPath, cb){
     // removes old places if there are any
     removeOldPlaces();
     // Reads in all places
     d3.json(jsonPath, function(error, data){
 
-        var width = 200,
-            height = 80;
+        var width = placeBoxWidth,
+            height = placeBoxHeight;
 
         var paddingHor = 6,
             paddingVert = 6,
@@ -71,9 +79,6 @@ function readPlaces(jsonPath){
                 .append("g")
                 .attr("class", "place")
                 .attr("id", function(d, i){ return "place-" + i;})
-                .attr("transform", function(d){
-                    return "translate(" + (d.location.x - (width/2)) + ", " + (d.location.y - (height/2)) + ")";
-                })
                 .style("opacity", DEFAULT_PLACE_OPACITY);
 
         // box around all place info
@@ -133,20 +138,104 @@ function readPlaces(jsonPath){
                 bbox.width = innerWidth;
                 bbox.height = innerHeight;
             });
+
+        cb();
     });
+}
+
+function startVideo(videoPath){
+    player = new Player(videoPath);
+}
+
+// start the place movements
+function startMovingPlaces(){
+    /*var position = */
+   places.selectAll(".place")
+        .each(function(d){
+            var timeToNext = d.locations[0].time;
+            var that = this;
+
+            // move place to starting position first
+            var place = d3.select(that);
+            var x = d.locations[0].pos[0];
+            var y = d.locations[0].pos[1];
+            place.attr("transform", "translate(" + x + ", " + y + ")" )
+                .style("opacity", 0);
+
+            // fade in just before it's first appearance
+            var fadeInTime = 500;
+            setTimeout(function(){
+                place.transition()
+                    .duration(fadeInTime)
+                    .style("opacity", 1);
+            }, timeToNext-fadeInTime);
+
+            // begin the first action at the appropriate time
+            setTimeout(function(){ movePlace(place, 0); }, timeToNext);
+        });
+}
+
+function movePlace(elem, locationIndex){
+
+    if (!elem.hasClass("move-lock")){
+        elem.transition()
+            .duration(function(d){
+                if (locationIndex+1 < d.locations.length){
+                    var timeToNext = d.locations[locationIndex+1].time - d.locations[locationIndex].time;
+                    return timeToNext;
+                } else return 0;
+            })
+            .ease("linear")
+            .attr("transform", function(d){
+                if (locationIndex+1 < d.locations.length){
+                    var x = d.locations[locationIndex].pos[0] - placeBoxWidth/2;
+                    var y = d.locations[locationIndex].pos[1] - placeBoxHeight/2;
+                    return "translate(" + x + ", " + y + ")";
+                } else return elem.attr("transform");
+            });
+    }
+
+    elem.each(function(d){
+        // if not at the end, play the next movement command
+        if (locationIndex+1 < d.locations.length){
+            var timeToNext = d.locations[locationIndex+1].time - d.locations[locationIndex].time;
+            setTimeout(function(){ movePlace(elem, locationIndex+1); }, timeToNext);
+        }
+        else {
+            setTimeout(function(){
+                elem.transition()
+                    .duration(300)
+                    .ease("linear")
+                    .attr("transform", function(d){
+                        return "translate(" + -300 + ", " + d3.transform(elem.attr("transform")).translate[1] + ")";
+                    });
+                }, 50);
+        }
+
+        var x = d.locations[locationIndex].pos[0];
+        var y = d.locations[locationIndex].pos[1];
+
+        if (isPlaceInCenter(x, y) && selectCooledDown()){
+            selectPlace("#" + elem.attr("id"));
+            startSelectCoolDown();
+        }
+    });
+
+}
+
+function startSelectCoolDown(){
+    selectCoolDown = false;
+    setTimeout(function(){ selectCoolDown = true; }, 2000);
+}
+
+function selectCooledDown(){
+    return selectCoolDown;
 }
 
 function removeOldPlaces(){
     places.selectAll(".place").remove();
 }
 
-function setupPlaceBoxes(width, height){
-
-}
-
-readPlaces("json/places.json");
-
-// makes the place selected which means
 // place is a selector string
 function selectPlace(placeSelector){
 
@@ -166,9 +255,16 @@ function selectPlace(placeSelector){
         selectBoxHeight = boxHeight + boxIncrease + plusRegion;
 
     // jquery addClass doesn't work ...
-    place.attr("class", place.attr("class") + " selected-place");
+    addClass(placeSelector, "select-place")
 
     var placeNode = places.select(placeSelector);
+
+    // move to centre
+    placeNode.transition()
+        .duration(1000)
+        .ease("cubic")
+        .attr("transform", "translate(" + (glassesWidth/2) + ", " + ( glassesHeight/2 ) + ")");
+
     var selectGroup = placeNode.insert("g", ":first-child")
         .attr("id", "select-group");
 
@@ -214,6 +310,8 @@ function selectPlace(placeSelector){
     selectGroup.transition()
         .duration(dur)
         .style("opacity", 1);
+
+    addClass("#" + placeNode.attr("id"), "move-lock")
 }
 
 function deselectPlace(){
@@ -227,18 +325,23 @@ function deselectPlace(){
     d3Node.transition()
         .duration(500)
         .style("opacity", DEFAULT_PLACE_OPACITY);
+        .each("end", function(){
+            removeClass("#" + jqueryNode.attr("id"), "move-lock")
+        })
 
     selectGroup.transition()
         .duration(500)
         .style("opacity", 0)
         // remove the select graphics
-        .each("end", function(){ selectGroup.remove(); });
+        .each("end", function(){
+            selectGroup.remove();
+        });
 
-    removeClass(selector, "selected-place");
+    removeClass("#" + jqueryNode.attr("id"), "selected-place");
 }
 
-function expandPlace(selector){
-    var placeNode = places.select(selector),
+function expandSelected(){
+    var placeNode = places.select(".selected-place"),
         titleBox = places.select("#title-box"),
         placeBox = placeNode.select("#place-box"),
         selectBox = placeNode.select("#select-box"),
@@ -250,8 +353,8 @@ function expandPlace(selector){
         paddingHor = 6,
         selectBoxPadding = 20,
         titleBoxHeight = +titleBox.attr("height")
-        extraInfoFontSize = 12;
-        console.log("hello\nyo");
+        extraInfoFontSize = 12
+        linePadding = 4;
 
     // animations
     var dur = 800;
@@ -273,17 +376,22 @@ function expandPlace(selector){
         .attr("y", expandHeight - paddingVert);
 
     // add extra info text
-    var extraInfo = placeNode.append("text")
+    var extraInfo = placeNode.append("g")
+        .attr("id", "info-text")
+        .style("opacity", 0);
+
+    extraInfo.selectAll("text").data(function (d, i){
+            return d.extraInfo;
+        })
+        .enter()
+        .append("text")
         .text(function(d){
-            var extraInfo = "";
-            d.extraInfo.forEach(function(sentence, i){
-                extraInfo += sentence + "\n";
-            })
-            return extraInfo;
+            return d;
         })
         .attr("x", paddingHor)
-        .attr("y", titleBoxHeight + paddingVert + extraInfoFontSize)
-        .style("opacity", 0);
+        .attr("y", function(d, i){
+           return titleBoxHeight + paddingVert + extraInfoFontSize + (i * (extraInfoFontSize + linePadding));
+        });
 
     extraInfo.transition()
         .duration(dur)
@@ -293,68 +401,14 @@ function expandPlace(selector){
     addClass(selector, "expanded-place");
 }
 
-function createInterface(){
-    var arrowHeight = 50,
-        okHeight = 80,
-        width = 50,
-        height = arrowHeight*2 + okHeight,
-        x = pageWidth * 0.95,
-        y = pageHeight * 0.5 - height/2;
+function reduceExpanded(){
+    var place = places.select(".selectedPlace"),
+        placeBox = place.select("#place-box"),
+        selectBox = place.select("#select-box"),
+        openingHours = place.select("#opening-hours");
 
-    var interface = glasses.append("g")
-        .attr("id", "interface");
-
-    var arrows = ["up", "down"];
-    var arrow = interface.selectAll(".arrow")
-        .data(arrows)
-        .enter()
-        .append("g")
-        .attr("id", function(d){
-            return d + "-arrow";
-        });
-
-    var lineWidth = 4;
-    arrow.append("rect")
-        .attr("x", x)
-        .attr("y", function(d, i){
-            return y + i * (arrowHeight + okHeight);
-        })
-        .attr("width", width)
-        .attr("height", arrowHeight);
-
-    arrow.append("image")
-        .attr("xlink:href", function(d){
-            return "res/icon/arrow-" + d + ".png";
-        })
-        .attr("x", x)
-        .attr("y", function(d, i){
-            return y + i * (arrowHeight + okHeight);
-        })
-        .attr("width", width)
-        .attr("height", arrowHeight)
-        .style("opacity", 0.5);
-
-    var ok = interface.append("g")
-        .attr("id", "ok-button");
-
-    ok.append("image")
-        .attr("xlink:href", "res/icon/circle.png")
-        .attr("x", x)
-        .attr("y", y + arrowHeight)
-        .attr("width", width)
-        .attr("height", okHeight);
-
-    $(".arrow").mousedown(function(event){
-        var id = event.target.attr("id");
-
-        var forward;
-        if (id === "up-arrow")
-            forward = true;
-        else false;
-
-        selectNextPlace(forward);
-    })
 }
+
 
 // if forward is false, then go opposite direction?
 function selectNextPlace(forward){
@@ -363,21 +417,15 @@ function selectNextPlace(forward){
 }
 
 // checks if any places are in the center, if so, then select the place
-function isPlaceInCenter(){
-    var detectionRadius = 400;
+function isPlaceInCenter(x, y){
+    var detectionRadius = 600;
 
-    $(".place").each(function(i){
-        var x = this.attr("x"),
-            y = this.attr("y");
+    var centerX = glassesWidth/2
+        centerY = glassesHeight/2;
 
-        var centerX = glassesWidth/2
-            centerY = glassesHeight/2;
-
-        if (Math.sqrt(Math.pow(x - centerX, 2), Math.pow(y - centerY, 2)) < detectionRadius){
-            console.log("place in center!");
-            return true;
-        }
-    })
+    if (Math.sqrt(Math.pow(x - centerX, 2), Math.pow(y - centerY, 2)) < detectionRadius){
+        return true;
+    }
     return false;
 }
 
@@ -389,10 +437,6 @@ function removeClass(selector, className){
     $(selector).attr("class", $(selector).attr("class").replace(className, ""));
 }
 
-createInterface();
-setTimeout(function(){
-    selectPlace("#place-0");
-    setTimeout(function(){
-        expandPlace("#place-0");
-    }, 1000);
-}, 500);
+function hasClass(selector, className){
+    return $("." + className).length !== 0;
+}

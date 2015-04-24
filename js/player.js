@@ -13,7 +13,19 @@ var Player = function(videoPath){
     this.mute = function(){
         video.muted = true;
     }
+    this.playing = function(){
+        return !video.paused;
+    }
+
     this.load(videoPath);
-    this.loop = true;
-    this.play();
+    //this.loop = true;
+    var that = this;
+    setTimeout(function() {
+        console.log("playing!---------------------");
+        startTime = new Date().getTime();
+        that.play();
+    }, 0);
+
+
+
 }

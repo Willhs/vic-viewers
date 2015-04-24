@@ -24,10 +24,11 @@ video {
 
 #glasses-box {
     fill: steelblue;
+    opacity: 0.7;
 }
 
 .place {
-    opacity: 0.6;
+    opacity: 0.4;
 }
 
 #place-box {
@@ -51,4 +52,9 @@ video {
 #opening-hours {
     fill: pink;
     stroke: orange;
+}
+
+#arrow-rect {
+    fill: grey;
+    opacity: 0.5;
 }
