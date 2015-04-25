@@ -177,7 +177,7 @@ function startMovingPlaces(){
 
 function movePlace(elem, locationIndex){
 
-    if (!elem.hasClass("move-lock")){
+    if (!hasClass("#" + elem.attr("id"), "move-lock")){
         elem.transition()
             .duration(function(d){
                 if (locationIndex+1 < d.locations.length){
@@ -255,7 +255,7 @@ function selectPlace(placeSelector){
         selectBoxHeight = boxHeight + boxIncrease + plusRegion;
 
     // jquery addClass doesn't work ...
-    addClass(placeSelector, "select-place")
+    addClass(placeSelector, "selected-place")
 
     var placeNode = places.select(placeSelector);
 
@@ -324,10 +324,10 @@ function deselectPlace(){
     // fade out
     d3Node.transition()
         .duration(500)
-        .style("opacity", DEFAULT_PLACE_OPACITY);
+        .style("opacity", DEFAULT_PLACE_OPACITY)
         .each("end", function(){
             removeClass("#" + jqueryNode.attr("id"), "move-lock")
-        })
+        });
 
     selectGroup.transition()
         .duration(500)
@@ -337,6 +337,7 @@ function deselectPlace(){
             selectGroup.remove();
         });
 
+    console.log("before remove place")
     removeClass("#" + jqueryNode.attr("id"), "selected-place");
 }
 
@@ -402,7 +403,7 @@ function expandSelected(){
 }
 
 function reduceExpanded(){
-    var place = places.select(".selectedPlace"),
+    var place = places.select(".selected-place"),
         placeBox = place.select("#place-box"),
         selectBox = place.select("#select-box"),
         openingHours = place.select("#opening-hours");
@@ -418,7 +419,7 @@ function selectNextPlace(forward){
 
 // checks if any places are in the center, if so, then select the place
 function isPlaceInCenter(x, y){
-    var detectionRadius = 600;
+    var detectionRadius = 300;
 
     var centerX = glassesWidth/2
         centerY = glassesHeight/2;
@@ -434,7 +435,9 @@ function addClass(selector, className){
 }
 
 function removeClass(selector, className){
+    console.log("removing class", selector, className);
     $(selector).attr("class", $(selector).attr("class").replace(className, ""));
+    console.log($(selector).attr("class"));
 }
 
 function hasClass(selector, className){

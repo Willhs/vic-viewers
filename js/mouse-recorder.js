@@ -32,7 +32,7 @@ function stopRecording(){
     var smallPositions = [];
 
     for (var i = 0; i < positions.length; i++){
-        if (i%10 == 0)
+        if (i%1p == 0)
             smallPositions.push(positions[i]);
     }
 
